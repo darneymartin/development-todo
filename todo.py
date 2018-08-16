@@ -1,8 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ################################################################################
 # Author: Mike Brown (m8r0wn), Darnell Martin (darneymartin)
-# Description:
+# License: GPL-3.0
+# Description: Search through files on the local machine and identify @TODO tags
+#              to create a task list for developers.
 ################################################################################
 
 import os
@@ -36,7 +38,7 @@ class ParserThread(threading.Thread):
             with open(self.filename) as f:
                 content = f.readlines()
             content = [x.strip() for x in content]
-            line_count = 0
+            line_count = 1
             for line in content:
                 if self.match(line):
                     comment = self.parse(line)
@@ -135,62 +137,55 @@ class SearchThread(threading.Thread):
 # The main function that gets ran whenever the program is ran
 #
 ################################################################################
-
 def main(args):
     print("File\tLine#\tComment")
-    try:
-        # Launch thread to search directory and place in file queue
-        search_thread = SearchThread(args.path[0])
-        search_thread.daemon = True
-        search_thread.start()
+    # Launch thread to search directory and place in file queue
+    search_thread = SearchThread(args.path[0])
+    search_thread.daemon = True
+    search_thread.start()
 
-        #Wait for the SearchThread to finish running
-        while(search_thread.isRunning()):
-            sleep(0.01)
+    #Wait for the SearchThread to finish running
+    while(search_thread.isRunning()):
+        sleep(0.01)
 
-        #Get the list of files
-        file_queue = search_thread.getFileQueue()
+    #Get the list of files
+    file_queue = search_thread.getFileQueue()
 
-        #Free up the memory
-        del search_thread
+    #Free up the memory
+    del search_thread
 
-        #Start file lookup
-        active_threads = []
-        while file_queue:
-            thread = ParserThread(file_queue.pop(0))
-            thread.start()
-            active_threads.append(thread)
-            while(threading.activeCount() == args.max_threads):
-                sleep(0.01)
-                for thread in reversed(active_threads):
-                    if thread.isRunning() == False:
-                        active_threads.remove(thread)
-
-        # Wait for threads to close
-        while len(active_threads) > 0:
+    #Start file lookup
+    active_threads = []
+    while file_queue:
+        thread = ParserThread(file_queue.pop(0))
+        thread.start()
+        active_threads.append(thread)
+        while(threading.activeCount() == args.max_threads):
             sleep(0.01)
             for thread in reversed(active_threads):
                 if thread.isRunning() == False:
                     active_threads.remove(thread)
-    except Exception as e:
-        exit(0)
-    exit(0)
+
+    # Wait for threads to close
+    while len(active_threads) > 0:
+        sleep(0.01)
+        for thread in reversed(active_threads):
+            if thread.isRunning() == False:
+                active_threads.remove(thread)
 
 ################################################################################
-################################################################################
 if __name__ == '__main__':
-    version = "1.0 (Alpha)"
+    version = "1.1 (Alpha)"
     try:
         args = argparse.ArgumentParser(description="""
                 {0}   v.{1}
         --------------------------------------------------
-Tool to search through files used to identify @TODO tags.
-
-Notes:
-
+Tool to search through files on the local machine and identify 
+@TODO tags to create a task list for developers.
 
 Usage:
     todo -t 30 ./dir
+    todo /root/project-one/
     """.format(argv[0], version), formatter_class=argparse.RawTextHelpFormatter, usage=argparse.SUPPRESS)
         action = args.add_mutually_exclusive_group(required=False)
         args.add_argument('-i', dest='ignore', type=str, default='', help='Ignore files with a certain extentsions')
@@ -206,4 +201,3 @@ Usage:
     except KeyboardInterrupt:
         print("\n[!] Key Event Detected, Closing...")
         exit(0)
-    exit(0)
