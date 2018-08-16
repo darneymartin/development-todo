@@ -4,7 +4,7 @@ development-todo is a program used to search through directories on the local ma
 ## Example
 ./file.py
 ``` python
-!#usr/bin/env python3
+#!usr/bin/env python3
 @TODO Fix output Formatting
 
 import sys
@@ -14,9 +14,8 @@ import sys
 todo ./
 ``` 
 File        Line#   Comment
-./file.py  2       Fix output Formatting 
+./file.py     2     Fix output Formatting 
 ```
-
 
 ## Options
 ``` 
